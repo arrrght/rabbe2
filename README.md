@@ -1,5 +1,9 @@
+```
 docker compose < rabbitmq + rabbitmq + haproxy
 
-rabbe consumer
+rust 1.0 need
 
-rabbe publisher
+run:
+  cargo run consumer
+  cargo run publisher
+```
