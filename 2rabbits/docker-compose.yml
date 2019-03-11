@@ -1,0 +1,52 @@
+version: '3'
+services:
+  rabbit0:
+    image: rabbitmq:management-alpine
+    hostname: rabbit0
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=teej3aeteichooth7vae3aeroh7Oaqu3
+    ports:
+      - "15673:15672"
+      - "5673:5672"
+
+  rabbit1:
+    image: rabbitmq:management-alpine
+    hostname: rabbit1
+    depends_on:
+      - rabbit0
+    volumes:
+      - ./rabbit-entrypoint.sh:/usr/local/bin/rabbit-entrypoint.sh:ro
+    entrypoint: rabbit-entrypoint.sh
+    environment:
+      - RABBITMQ_ERLANG_COOKIE=teej3aeteichooth7vae3aeroh7Oaqu3
+      - CLUSTER_WITH=rabbit0
+    ports:
+      - "15674:15672"
+      - "5674:5672"
+
+#  rabbit2:
+#    image: rabbitmq:management-alpine
+#    hostname: rabbit2
+#    depends_on:
+#      - rabbit0
+#    volumes:
+#      - ./rabbit-entrypoint.sh:/usr/local/bin/rabbit-entrypoint.sh:ro
+#    entrypoint: rabbit-entrypoint.sh
+#    environment:
+#      - RABBITMQ_ERLANG_COOKIE=teej3aeteichooth7vae3aeroh7Oaqu3
+#      - CLUSTER_WITH=rabbit0
+#    ports:
+#      - "15675:15672"
+#      - "5675:5672"
+        
+  haproxy:
+    image: haproxy:1.9
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    depends_on:
+      - rabbit0
+    ports:
+      - '80:1936'
+      - '5672:5672'
+      - '15672:15672'
+
