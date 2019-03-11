@@ -52,23 +52,29 @@ const RBT_MESSAGE: &str = r#"{
 }"#;
 
 fn main() {
-  env_logger::init();
-  let matches = App::new("rabbe2")
-      .subcommand(SubCommand::with_name("publisher").about("publish messages"))
-      .subcommand(SubCommand::with_name("consumer").about("consume"))
-      .get_matches();
+    env_logger::init();
+    let matches = App::new("rabbe2")
+        .subcommand(SubCommand::with_name("publisher").about("publish messages"))
+        .subcommand(
+            SubCommand::with_name("consumer")
+                .about("consume")
+                .arg_from_usage("-t, --timeout=[timeout] 'Heartbeat timeout'"),
+        )
+        .get_matches();
 
-  match matches.subcommand_name() {
-      Some("both") => println!("method 'both' is'n written yet"),
-      Some("consumer") => {
-          println!("running consumer");
-          consumer::run();
-      },
-      Some("publisher") => {
-          println!("running publisher");
-          publisher::run();
-      },
-      None => println!("use --help"),
-      _ => println!("use --help"),
-  }
+    if let ("consumer", Some(cmd)) = matches.subcommand() {
+        consumer::run(&cmd);
+    } else {
+        println!("run as dnsdg ping");
+    }
+
+    match matches.subcommand_name() {
+        Some("both") => println!("method 'both' is'n written yet"),
+        Some("publisher") => {
+            println!("running publisher");
+            publisher::run();
+        }
+        None => println!("use --help"),
+        _ => println!("use --help"),
+    }
 }
