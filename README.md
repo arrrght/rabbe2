@@ -20,6 +20,5 @@ rust 1.0 need
 
 ```
 cargo run:
-  cargo run consumer
-  cargo run publisher
+  cargo run --consumer --publisher
 ```

@@ -14,7 +14,7 @@ use lapin_futures as lapin;
 //use std::net::SocketAddr;
 //use std::io::{self, Write};
 
-use clap::{App, SubCommand};
+use clap::App;
 
 mod consumer;
 mod publisher;
@@ -53,28 +53,36 @@ const RBT_MESSAGE: &str = r#"{
 
 fn main() {
     env_logger::init();
-    let matches = App::new("rabbe2")
-        .subcommand(SubCommand::with_name("publisher").about("publish messages"))
-        .subcommand(
-            SubCommand::with_name("consumer")
-                .about("consume")
-                .arg_from_usage("-t, --timeout=[timeout] 'Heartbeat timeout'"),
-        )
-        .get_matches();
+    let mut app = App::new("rabbe2")
+        .arg_from_usage("-t, --timeout=[timeout] 'Heartbeat timeout'")
+        .arg_from_usage("-c, --consumer 'run consumer'")
+        .arg_from_usage("-p, --publisher 'run publisher'");
+    let matches = app.clone().get_matches();
 
-    if let ("consumer", Some(cmd)) = matches.subcommand() {
-        consumer::run(&cmd);
-    } else {
-        println!("run as dnsdg ping");
+    let mut children = vec![];
+    if matches.is_present("consumer") {
+        println!("spawn consumer");
+        let matches = matches.clone();
+        children.push(std::thread::spawn(move || {
+            consumer::run(&matches);
+        }));
+    };
+
+    if matches.is_present("publisher") {
+        println!("spawn publisher");
+        let matches = matches.clone();
+        children.push(std::thread::spawn(move || {
+            publisher::run(&matches);
+        }));
+    };
+
+    if !matches.is_present("publisher") &&  !matches.is_present("consumer")  {
+        app.print_help().unwrap();
+        println!("");
     }
 
-    match matches.subcommand_name() {
-        Some("both") => println!("method 'both' is'n written yet"),
-        Some("publisher") => {
-            println!("running publisher");
-            publisher::run();
-        }
-        None => println!("use --help"),
-        _ => println!("use --help"),
+    for child in children {
+        let _ = child.join();
     }
+
 }

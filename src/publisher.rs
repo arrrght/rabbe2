@@ -12,8 +12,11 @@ use tokio::runtime::Runtime;
 use log::info;
 use std::net::SocketAddr;
 use std::io::{self, Write};
+use clap::{ArgMatches};
 
-pub fn run() {
+
+pub fn run(_args: &ArgMatches) {
+    println!("runing publisher");
     loop {
         let addr = "127.0.0.1:5672".parse().unwrap();
         connect_to(addr);

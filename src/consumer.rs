@@ -1,4 +1,3 @@
-//use env_logger;
 use crate::lapin::channel::{BasicConsumeOptions, QueueDeclareOptions};
 use crate::lapin::client::ConnectionOptions;
 use crate::lapin::types::FieldTable;
@@ -21,7 +20,7 @@ pub fn run(args: &ArgMatches) {
         timeout: value_t!(args, "timeout", u16).unwrap_or(5),
     };
 
-    println!("Run with timeout: {}", prm.timeout);
+    println!("run consumer with timeout: {}", prm.timeout);
 
     let addr = "127.0.0.1:5672".parse().unwrap();
 
