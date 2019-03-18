@@ -1,3 +1,8 @@
+[![Travis Build Status][travis-badge]][travis-url]
+
+[travis-badge]: https://travis-ci.org/arrrght/rabbe2.svg?branch=master
+[travis-url]: https://travis-ci.org/arrrght/rabbe2
+
 ## Тесты на проверку соединения/отвал с приложения на RabbitMQ
 
 docker-compose, конфиги находятся в каталоге 2rabbits
