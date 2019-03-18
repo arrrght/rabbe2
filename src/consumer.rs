@@ -1,7 +1,7 @@
 use crate::lapin::channel::{BasicConsumeOptions, QueueDeclareOptions};
 use crate::lapin::client::ConnectionOptions;
 use crate::lapin::types::FieldTable;
-use clap::{value_t, ArgMatches};
+use clap::{ArgMatches};
 use failure::Error;
 use futures::{future::Future, Stream};
 use lapin_futures as lapin;
@@ -11,16 +11,10 @@ use tokio;
 use tokio::net::TcpStream;
 use tokio::runtime::Runtime;
 
-#[derive(Debug, Copy, Clone)]
-struct Opt {
-    timeout: u16,
-}
-pub fn run(args: &ArgMatches) {
-    let prm = Opt {
-        timeout: value_t!(args, "timeout", u16).unwrap_or(5),
-    };
+pub fn run(_args: &ArgMatches, prm: super::Opt) {
 
     println!("run consumer with timeout: {}", prm.timeout);
+    let timeout = prm.timeout;
 
     let addr = "127.0.0.1:5672".parse().unwrap();
 
@@ -35,7 +29,7 @@ pub fn run(args: &ArgMatches) {
                         ConnectionOptions {
                             username: super::RBT_USER.to_string(),
                             password: super::RBT_PASSWORD.to_string(),
-                            heartbeat: prm.timeout,
+                            heartbeat: timeout,
                             ..Default::default()
                         },
                     )
@@ -48,19 +42,19 @@ pub fn run(args: &ArgMatches) {
 
                     client.create_channel().map_err(Error::from)
                 })
-                .and_then(|channel| {
+                .and_then(move |channel| {
                     let id = channel.id;
                     println!("created channel with id: {}", id);
 
                     let ch = channel.clone();
                     channel
                         .queue_declare(
-                            super::RBT_QUEUE,
+                            &prm.queue,
                             QueueDeclareOptions::default(),
                             FieldTable::new(),
                         )
                         .and_then(move |queue| {
-                            println!("channel {} declared queue {}", id, super::RBT_QUEUE);
+                            println!("channel {} declared queue {}", id, prm.queue);
                             channel.basic_consume(
                                 &queue,
                                 "rust_consumer",

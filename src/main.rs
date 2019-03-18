@@ -15,17 +15,21 @@ use lapin_futures as lapin;
 //use std::io::{self, Write};
 
 use clap::App;
+use clap::{value_t};
 
 mod consumer;
 mod publisher;
 
-//const RBT_QUEUE: &str = "pikapika";
-//const RBT_USER: &str = "crawler1";
-//const RBT_PASSWORD: &str = "crawler1";
+#[derive(Debug, Clone)]
+pub struct Opt{
+    timeout: u16,
+    queue: String,
+
+}
 pub const SLEEP_MILLIS: u64 = 500;
 const RBT_USER: &str = "guest";
 const RBT_PASSWORD: &str = "guest";
-const RBT_QUEUE: &str = "some";
+//const RBT_QUEUE: &str = "some";
 const RBT_MESSAGE: &str = r#"{
   "head": {
     "request": {
@@ -53,18 +57,26 @@ const RBT_MESSAGE: &str = r#"{
 
 fn main() {
     env_logger::init();
-    let mut app = App::new("rabbe2")
-        .arg_from_usage("-t, --timeout=[timeout] 'Heartbeat timeout'")
+    let app = App::new("rabbe2")
+        .arg_from_usage("-t, --timeout=[5] 'Heartbeat timeout'")
         .arg_from_usage("-c, --consumer 'run consumer'")
-        .arg_from_usage("-p, --publisher 'run publisher'");
+        .arg_from_usage("-p, --publisher 'run publisher'")
+        .arg_from_usage("-a, --add 'add some messages to queue'")
+        .arg_from_usage("-q, --queue=[some] 'rabbit's queue name'");
     let matches = app.clone().get_matches();
+
+    let prm = Opt {
+        timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
+        queue: value_t!(matches, "queue-name", String).unwrap_or("some".to_string())
+    };
 
     let mut children = vec![];
     if matches.is_present("consumer") {
         println!("spawn consumer");
         let matches = matches.clone();
+        let prm2 = prm.clone();
         children.push(std::thread::spawn(move || {
-            consumer::run(&matches);
+            consumer::run(&matches, prm2);
         }));
     };
 
@@ -72,14 +84,9 @@ fn main() {
         println!("spawn publisher");
         let matches = matches.clone();
         children.push(std::thread::spawn(move || {
-            publisher::run(&matches);
+            publisher::run(&matches, prm.clone());
         }));
     };
-
-    if !matches.is_present("publisher") &&  !matches.is_present("consumer")  {
-        app.print_help().unwrap();
-        println!("");
-    }
 
     for child in children {
         let _ = child.join();
