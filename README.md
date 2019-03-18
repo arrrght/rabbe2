@@ -21,6 +21,17 @@ consumer - держит, но падает по таймауту в случае
 rust 1.0 need
 
 ```
-cargo run:
-  cargo run --consumer --publisher
+USAGE:
+    rabbe2 [FLAGS] [OPTIONS]
+
+FLAGS:
+    -a, --add          add some messages to queue
+    -c, --consumer     run consumer
+    -h, --help         Prints help information
+    -p, --publisher    run publisher
+    -V, --version      Prints version information
+
+OPTIONS:
+    -q, --queue <some>    rabbit's queue name
+    -t, --timeout <5>     Heartbeat timeout
 ```
