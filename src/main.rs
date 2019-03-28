@@ -1,18 +1,4 @@
 use lapin_futures as lapin;
-//use crate::lapin::channel::{BasicProperties, BasicPublishOptions, QueueDeclareOptions};
-//use crate::lapin::client::ConnectionOptions;
-//use crate::lapin::types::FieldTable;
-//use env_logger;
-//use failure::Error;
-//use futures::future::Future;
-
-//use tokio;
-//use tokio::net::TcpStream;
-//use tokio::runtime::Runtime;
-
-//use log::info;
-//use std::net::SocketAddr;
-//use std::io::{self, Write};
 
 use clap::App;
 use clap::{value_t};
@@ -58,17 +44,20 @@ const RBT_MESSAGE: &str = r#"{
 fn main() {
     env_logger::init();
     let app = App::new("rabbe2")
-        .arg_from_usage("-t, --timeout=[5] 'Heartbeat timeout'")
+        .arg_from_usage("-t, --timeout 'Heartbeat timeout'")
         .arg_from_usage("-c, --consumer 'run consumer'")
         .arg_from_usage("-p, --publisher 'run publisher'")
         .arg_from_usage("-a, --add 'add some messages to queue'")
-        .arg_from_usage("-q, --queue=[some] 'rabbit's queue name'");
+        .arg_from_usage("-q, --queue[some] 'rabbit's queue name'")
+        .arg_from_usage("-s, --save 'Save messages'");
     let matches = app.clone().get_matches();
 
     let prm = Opt {
         timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
-        queue: value_t!(matches, "queue-name", String).unwrap_or("some".to_string())
+        queue: value_t!(matches, "queue", String).unwrap_or("some".to_string())
     };
+    //println!("QU:{}", prm.queue);
+    //std::process::exit(0);
 
     let mut children = vec![];
     if matches.is_present("consumer") {
