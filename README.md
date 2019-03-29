@@ -34,9 +34,13 @@ FLAGS:
     -c, --consumer     run consumer
     -h, --help         Prints help information
     -p, --publisher    run publisher
+    -r, --read         Read messages from dir
+    -s, --save-file    Save messages to file
     -V, --version      Prints version information
 
 OPTIONS:
-    -q, --queue <some>    rabbit's queue name
-    -t, --timeout <5>     Heartbeat timeout
+    -C, --count <9999>     Process n messages
+    -q, --queue <some>     rabbit's queue name
+    -T, --sleep <msec>     Sleep between publish
+    -t, --timeout <sec>    Heartbeat timeout
 ```
