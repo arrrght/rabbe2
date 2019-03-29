@@ -14,7 +14,6 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::fs::File;
-use std::io::prelude::*;
 
 pub fn run(args: &ArgMatches, prm: super::Opt) {
     println!("run consumer with timeout: {}", prm.timeout);
@@ -83,6 +82,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                                     let mut file = File::create(f_name).unwrap();
                                     file.write_all(&message.data).unwrap();
                                     print!("S");
+                                    io::stdout().flush().expect("flushed");
                                 }else{
                                     let data = String::from_utf8(message.data).unwrap();
                                     let v: Value = serde_json::from_str(&data).unwrap();
