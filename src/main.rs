@@ -2,16 +2,19 @@ use lapin_futures as lapin;
 
 use clap::App;
 use clap::{value_t};
+use crate::lapin::channel::{BasicProperties, BasicPublishOptions, QueueDeclareOptions};
 
 mod consumer;
 mod publisher;
 
 #[derive(Debug, Clone)]
-pub struct Opt{
+pub struct Opt {
     timeout: u16,
+    sleep: u64,
     queue: String,
-
+    queue_options: QueueDeclareOptions,
 }
+
 pub const SLEEP_MILLIS: u64 = 500;
 const RBT_USER: &str = "guest";
 const RBT_PASSWORD: &str = "guest";
@@ -41,20 +44,27 @@ const RBT_MESSAGE: &str = r#"{
   }
 }"#;
 
+
 fn main() {
     env_logger::init();
     let app = App::new("rabbe2")
-        .arg_from_usage("-t, --timeout 'Heartbeat timeout'")
         .arg_from_usage("-c, --consumer 'run consumer'")
         .arg_from_usage("-p, --publisher 'run publisher'")
         .arg_from_usage("-a, --add 'add some messages to queue'")
         .arg_from_usage("-q, --queue[some] 'rabbit's queue name'")
-        .arg_from_usage("-s, --save 'Save messages'");
+        .arg_from_usage("-t, --timeout[sec] 'Heartbeat timeout'")
+        .arg_from_usage("-s, --save 'Save messages'")
+        .arg_from_usage("-T, --sleep[msec] 'Sleep between publish'");
     let matches = app.clone().get_matches();
 
     let prm = Opt {
         timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
-        queue: value_t!(matches, "queue", String).unwrap_or("some".to_string())
+        sleep: value_t!(matches, "sleep", u64).unwrap_or(500),
+        queue: value_t!(matches, "queue", String).unwrap_or("some".to_string()),
+        queue_options: QueueDeclareOptions {
+            //durable: true,
+            ..Default::default()
+        }
     };
     //println!("QU:{}", prm.queue);
     //std::process::exit(0);

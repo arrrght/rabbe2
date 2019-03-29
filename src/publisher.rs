@@ -55,7 +55,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt){
             let addr = "127.0.0.1:5672".parse().unwrap();
             connect_to(addr, super::RBT_MESSAGE, prm.clone());
             io::stdout().flush().unwrap();
-            std::thread::sleep(std::time::Duration::from_millis(super::SLEEP_MILLIS));
+            std::thread::sleep(std::time::Duration::from_millis(prm.sleep));
         }
     }
 }

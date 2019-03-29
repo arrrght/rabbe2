@@ -57,7 +57,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                         .queue_declare(
                             &prm.queue,
                             QueueDeclareOptions {
-                                durable: true,
+                                //durable: true,
                                 ..Default::default()
                             },
                             FieldTable::new(),
@@ -78,7 +78,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                                 if is_save.clone().into_inner(){
                                     let mut cnt = counter.lock().unwrap();
                                     *cnt += 1;
-                                    println!("somE {}", cnt);
+                                    //println!("somE {}", cnt);
                                     let f_name = "messages/".to_string() + &cnt.to_string();
                                     let mut file = File::create(f_name).unwrap();
                                     file.write_all(&message.data).unwrap();
