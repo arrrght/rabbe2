@@ -59,7 +59,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt){
                 io::stdout().flush().unwrap();
             }
         } else {
-            loop {
+            for _x in 1..prm.count_messages {
                 let addr = "127.0.0.1:5672".parse().unwrap();
                 connect_to(addr, super::RBT_MESSAGE, prm.clone());
                 io::stdout().flush().unwrap();

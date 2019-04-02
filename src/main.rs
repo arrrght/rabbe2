@@ -1,12 +1,10 @@
 use lapin_futures as lapin;
 
-use clap::App;
-use clap::{value_t};
 use crate::lapin::channel::{BasicProperties, BasicPublishOptions, QueueDeclareOptions};
+use clap::value_t;
+use clap::App;
 mod consumer;
 mod publisher;
-
-
 
 const RBT_USER: &str = "guest";
 const RBT_PASSWORD: &str = "guest";
@@ -43,6 +41,11 @@ pub struct Opt {
     queue: String,
     save: bool,
     queue_options: QueueDeclareOptions,
+    dcount: usize,
+}
+
+fn digicount(a: u32) -> usize {
+    ((a as f64).log10() + 1.0) as usize
 }
 
 fn main() {
@@ -62,22 +65,23 @@ fn main() {
     let prm = Opt {
         timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
         count_messages: value_t!(matches, "count", u32).unwrap_or(9999),
+        dcount: digicount(value_t!(matches, "count", u32).unwrap_or(9999)),
         sleep: value_t!(matches, "sleep", u64).unwrap_or(500),
         queue: value_t!(matches, "queue", String).unwrap_or("some".to_string()),
-        save: match matches.is_present("save-file"){
+        save: match matches.is_present("save-file") {
             true => true,
-            _ => false
+            _ => false,
         },
         queue_options: QueueDeclareOptions {
             //durable: true,
             ..Default::default()
-        }
+        },
     };
     //println!("PRM:{:?} ::: {:?}", prm, matches);
     //std::process::exit(0);
 
     let mut children = vec![];
-   
+
     if matches.is_present("consumer") {
         println!("spawn consumer");
         let matches = matches.clone();
@@ -98,5 +102,4 @@ fn main() {
     for child in children {
         let _ = child.join();
     }
-
 }

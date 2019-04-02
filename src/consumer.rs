@@ -19,6 +19,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
     println!("run consumer with timeout: {}", prm.timeout);
     let is_save = RefCell::new(prm.save);
     let count_messages = RefCell::new(prm.count_messages);
+    let p_padding = RefCell::new(prm.dcount);
     //let to_queue = RefCell::new(prm.save_queue.clone());
     let counter = Arc::new(Mutex::new(0u32));
     let timeout = prm.timeout;
@@ -86,7 +87,9 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                                         println!("\nDONE");
                                         std::process::exit(0);
                                     }
-                                    let f_name = "messages/".to_string() + &cnt.to_string();
+                                    //let pad = p_padding.clone().into_inner();
+                                    let f_name = format!("messages/{:0w$}", cnt, w=p_padding.clone().into_inner());
+                                    //let f_name = "messages/".to_string() + &cnt.to_string();
                                     let mut file = File::create(f_name).unwrap();
                                     file.write_all(&message.data).unwrap();
                                     print!("s");
