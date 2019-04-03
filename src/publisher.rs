@@ -1,4 +1,4 @@
-use crate::lapin::channel::{BasicProperties, BasicPublishOptions, QueueDeclareOptions};
+use crate::lapin::channel::{BasicProperties, BasicPublishOptions};
 use crate::lapin::client::ConnectionOptions;
 use crate::lapin::types::FieldTable;
 use failure::Error;
@@ -12,21 +12,21 @@ use tokio::runtime::Runtime;
 use clap::ArgMatches;
 use handlebars::Handlebars;
 use log::info;
+use std::collections::BTreeMap;
+use std::fs;
+use std::fs::read_to_string;
 use std::io::{self, Write};
 use std::net::SocketAddr;
-use std::collections::BTreeMap;
-use std::{fs, env};
-use std::fs::{File, read_to_string};
 
-pub fn run(args: &ArgMatches, prm: super::Opt){
-    if args.is_present("read"){
-        for entry in fs::read_dir("./messages/").unwrap(){
+pub fn run(args: &ArgMatches, prm: super::Opt) {
+    if args.is_present("read") {
+        for entry in fs::read_dir("./messages/").unwrap() {
             let f_name = entry.unwrap().path();
             let contents = read_to_string(f_name).unwrap();
             let addr = "127.0.0.1:5672".parse().unwrap();
             connect_to(addr, &contents, prm.clone());
         }
-    }else{
+    } else {
         println!("runing publisher");
         if args.is_present("add") {
             let json = r#"{
@@ -101,28 +101,25 @@ fn connect_to(addr: SocketAddr, msg: &str, prm: super::Opt) {
                     channel
                         .queue_declare(
                             &prm.queue,
-                            QueueDeclareOptions {
-                                //durable: true,
-                                ..Default::default()
-                            },
+                            prm.clone().queue_options,
+                            //QueueDeclareOptions {
+                            //    //durable: true,
+                            //    ..Default::default()
+                            //},
                             string_options,
                         )
                         .and_then(move |_| {
-                            info!("channel {} declare queue {}", id, "hello");
-                            //let pika_pika = super::RBT_MESSAGE.clone().as_bytes().to_vec();
-                            let pika_pika = msg2;
-                            //let pika_pika = msg.as_bytes().to_vec();
+                            println!("channel {} declare queue {}", id, "hello");
                             let p = channel.basic_publish(
                                 "",
                                 &prm.queue,
-                                pika_pika,
+                                msg2,
                                 BasicPublishOptions::default(),
                                 BasicProperties::default(),
                             );
                             print!("w");
                             io::stdout().flush().expect("flushed");
                             p
-                            //futures::future::ok(true)
                         })
                         .map_err(Error::from)
                 }),

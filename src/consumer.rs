@@ -5,26 +5,25 @@ use clap::ArgMatches;
 use failure::Error;
 use futures::{future::Future, Stream};
 use lapin_futures as lapin;
-use serde_json::Value;
+//use serde_json::Value;
 use std::io::{self, Write};
 use tokio;
 use tokio::net::TcpStream;
 use tokio::runtime::Runtime;
-use std::cell::RefCell;
-use std::rc::Rc;
+//use std::cell::RefCell;
+//use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::fs::File;
 
-pub fn run(args: &ArgMatches, prm: super::Opt) {
+pub fn run(_args: &ArgMatches, prm: super::Opt) {
     println!("run consumer with timeout: {}", prm.timeout);
-    let is_save = RefCell::new(prm.save);
-    let count_messages = RefCell::new(prm.count_messages);
-    let p_padding = RefCell::new(prm.dcount);
+    let arc_prm = Arc::new(Mutex::new(prm));
+    let cloned2_arc_prm = arc_prm.clone();
+    //let rc_prm = RefCell::new(prm);
+    //let count_messages = RefCell::new(prm.count_messages);
+    //let p_padding = RefCell::new(prm.dcount);
     //let to_queue = RefCell::new(prm.save_queue.clone());
     let counter = Arc::new(Mutex::new(0u32));
-    let timeout = prm.timeout;
-
-    //println!("OPTS: {:?}", prm);
 
     let addr = "127.0.0.1:5672".parse().unwrap();
 
@@ -39,7 +38,8 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                         ConnectionOptions {
                             username: super::RBT_USER.to_string(),
                             password: super::RBT_PASSWORD.to_string(),
-                            heartbeat: timeout,
+                            heartbeat: cloned2_arc_prm.lock().unwrap().clone().timeout,
+                            //heartbeat: timeout,
                             ..Default::default()
                         },
                     )
@@ -56,10 +56,13 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                     let id = channel.id;
                     println!("created channel with id: {}", id);
 
+                    let q_str = arc_prm.lock().unwrap().clone().queue.clone();
                     let ch = channel.clone();
+                    let cloned_arc_prm = arc_prm.clone();
                     channel
                         .queue_declare(
-                            &prm.queue,
+                            &q_str,
+                            //&prm.queue,
                             QueueDeclareOptions {
                                 //durable: true,
                                 ..Default::default()
@@ -67,9 +70,10 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                             FieldTable::new(),
                         )
                         .and_then(move |queue| {
-                            println!("channel {} declared queue {}", id, prm.queue);
+                            println!("channel {} declared queue {}", id, cloned_arc_prm.lock().unwrap().clone().queue);
                             channel.basic_consume(
                                 &queue,
+                                //&arc_prm.lock().unwrap().clone().queue,
                                 "rust_consumer",
                                 BasicConsumeOptions::default(),
                                 FieldTable::new(),
@@ -78,17 +82,23 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
                         .and_then(|stream| {
                             println!("got consumer stream");
 
+                            let cloned_arc_prm = arc_prm.clone();
                             stream.for_each(move |message| {
-                                if is_save.clone().into_inner(){
+                                //let is_save = RefCell::new(prm.save);
+                                
+                                if cloned_arc_prm.lock().unwrap().clone().save{
+                                //if is_save.clone().into_inner(){
                                     let mut cnt = counter.lock().unwrap();
-                                    let count_messages = count_messages.clone().into_inner();
+                                    //let count_messages = RefCell::new(prm.count_messages);
+                                    let count_messages = arc_prm.lock().unwrap().clone().count_messages;
+                                    //let count_messages = count_messages.clone().into_inner();
                                     *cnt += 1;
                                     if *cnt > count_messages {
                                         println!("\nDONE");
                                         std::process::exit(0);
                                     }
-                                    //let pad = p_padding.clone().into_inner();
-                                    let f_name = format!("messages/{:0w$}", cnt, w=p_padding.clone().into_inner());
+                                    let p_padding = arc_prm.lock().unwrap().clone().dcount;
+                                    let f_name = format!("messages/{:0w$}", cnt, w=p_padding);
                                     //let f_name = "messages/".to_string() + &cnt.to_string();
                                     let mut file = File::create(f_name).unwrap();
                                     file.write_all(&message.data).unwrap();

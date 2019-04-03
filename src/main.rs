@@ -1,6 +1,6 @@
 use lapin_futures as lapin;
 
-use crate::lapin::channel::{BasicProperties, BasicPublishOptions, QueueDeclareOptions};
+use crate::lapin::channel::QueueDeclareOptions;
 use clap::value_t;
 use clap::App;
 mod consumer;
@@ -54,10 +54,10 @@ fn main() {
         .arg_from_usage("-c, --consumer 'run consumer'")
         .arg_from_usage("-p, --publisher 'run publisher'")
         .arg_from_usage("-a, --add 'add some messages to queue'")
-        .arg_from_usage("-s, --save-file 'Save messages to file'")
+        .arg_from_usage("-s, --save-file 'Save messages to file into subdir messages'")
         .arg_from_usage("-q, --queue[some] 'rabbit's queue name'")
-        .arg_from_usage("-t, --timeout[sec] 'Heartbeat timeout'")
-        .arg_from_usage("-T, --sleep[msec] 'Sleep between publish'")
+        .arg_from_usage("-t, --timeout[5 sec] 'Heartbeat timeout'")
+        .arg_from_usage("-T, --sleep[500 msec] 'Sleep between publish'")
         .arg_from_usage("-C, --count[9999] 'Process n messages'")
         .arg_from_usage("-r, --read 'Read messages from dir'");
     let matches = app.clone().get_matches();
@@ -73,7 +73,7 @@ fn main() {
             _ => false,
         },
         queue_options: QueueDeclareOptions {
-            //durable: true,
+            durable: true,
             ..Default::default()
         },
     };
