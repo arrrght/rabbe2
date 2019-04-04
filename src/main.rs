@@ -42,6 +42,9 @@ pub struct Opt {
     save: bool,
     queue_options: QueueDeclareOptions,
     dcount: usize,
+    parall: usize,
+    is_read: bool,
+    is_add: bool,
 }
 
 fn digicount(a: u32) -> usize {
@@ -51,23 +54,33 @@ fn digicount(a: u32) -> usize {
 fn main() {
     env_logger::init();
     let app = App::new("rabbe2")
-        .arg_from_usage("-c, --consumer 'run consumer'")
-        .arg_from_usage("-p, --publisher 'run publisher'")
-        .arg_from_usage("-a, --add 'add some messages to queue'")
+        .arg_from_usage("-c, --consumer 'Run consumer'")
+        .arg_from_usage("-p, --publisher 'Run publisher'")
+        .arg_from_usage("-a, --add 'Add some messages to queue'")
         .arg_from_usage("-s, --save-file 'Save messages to file into subdir messages'")
-        .arg_from_usage("-q, --queue[some] 'rabbit's queue name'")
+        .arg_from_usage("-q, --queue[some] 'Rabbit's queue name'")
         .arg_from_usage("-t, --timeout[5 sec] 'Heartbeat timeout'")
-        .arg_from_usage("-T, --sleep[500 msec] 'Sleep between publish'")
-        .arg_from_usage("-C, --count[9999] 'Process n messages'")
-        .arg_from_usage("-r, --read 'Read messages from dir'");
+        .arg_from_usage("-T, --sleep[0 msec] 'Sleep between publish'")
+        .arg_from_usage("-C, --count[99999] 'Process n messages'")
+        .arg_from_usage("-r, --read 'Read messages from dir'")
+        .arg_from_usage("-P, --parallel[1] 'Parallel run'");
     let matches = app.clone().get_matches();
 
     let prm = Opt {
+        parall: value_t!(matches, "parallel", usize).unwrap_or(1),
         timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
-        count_messages: value_t!(matches, "count", u32).unwrap_or(9999),
-        dcount: digicount(value_t!(matches, "count", u32).unwrap_or(9999)),
-        sleep: value_t!(matches, "sleep", u64).unwrap_or(500),
+        count_messages: value_t!(matches, "count", u32).unwrap_or(99999),
+        dcount: digicount(value_t!(matches, "count", u32).unwrap_or(99999)),
+        sleep: value_t!(matches, "sleep", u64).unwrap_or(0),
         queue: value_t!(matches, "queue", String).unwrap_or("some".to_string()),
+        is_add: match matches.is_present("add") {
+            true => true,
+            _ => false,
+        },
+        is_read: match matches.is_present("read") {
+            true => true,
+            _ => false,
+        },
         save: match matches.is_present("save-file") {
             true => true,
             _ => false,
@@ -77,27 +90,29 @@ fn main() {
             ..Default::default()
         },
     };
-    //println!("PRM:{:?} ::: {:?}", prm, matches);
-    //std::process::exit(0);
 
     let mut children = vec![];
 
-    if matches.is_present("consumer") {
-        println!("spawn consumer");
-        let matches = matches.clone();
-        let prm2 = prm.clone();
-        children.push(std::thread::spawn(move || {
-            consumer::run(&matches, prm2);
-        }));
-    };
+    if prm.parall > 1 {
+        println!("do it in {} parallel", prm.parall);
+    }
+    for _  in 0..prm.parall {
+        if matches.is_present("consumer") {
+            println!("spawn consumer");
+            let prm = prm.clone();
+            children.push(std::thread::spawn(|| {
+                consumer::run(prm);
+            }));
+        };
 
-    if matches.is_present("publisher") {
-        println!("spawn publisher");
-        let matches = matches.clone();
-        children.push(std::thread::spawn(move || {
-            publisher::run(&matches, prm.clone());
-        }));
-    };
+        if matches.is_present("publisher") {
+            println!("spawn publisher");
+            let prm = prm.clone();
+            children.push(std::thread::spawn(move || {
+                publisher::run(prm.clone());
+            }));
+        };
+    }
 
     for child in children {
         let _ = child.join();

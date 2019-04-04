@@ -9,7 +9,7 @@ use tokio;
 use tokio::net::TcpStream;
 use tokio::runtime::Runtime;
 
-use clap::ArgMatches;
+//use clap::ArgMatches;
 use handlebars::Handlebars;
 use log::info;
 use std::collections::BTreeMap;
@@ -18,8 +18,8 @@ use std::fs::read_to_string;
 use std::io::{self, Write};
 use std::net::SocketAddr;
 
-pub fn run(args: &ArgMatches, prm: super::Opt) {
-    if args.is_present("read") {
+pub fn run(prm: super::Opt) {
+    if prm.is_read {
         for entry in fs::read_dir("./messages/").unwrap() {
             let f_name = entry.unwrap().path();
             let contents = read_to_string(f_name).unwrap();
@@ -28,7 +28,7 @@ pub fn run(args: &ArgMatches, prm: super::Opt) {
         }
     } else {
         println!("runing publisher");
-        if args.is_present("add") {
+        if prm.is_add {
             let json = r#"{
           "header": {
             "source": "pledge",
@@ -102,14 +102,10 @@ fn connect_to(addr: SocketAddr, msg: &str, prm: super::Opt) {
                         .queue_declare(
                             &prm.queue,
                             prm.clone().queue_options,
-                            //QueueDeclareOptions {
-                            //    //durable: true,
-                            //    ..Default::default()
-                            //},
                             string_options,
                         )
                         .and_then(move |_| {
-                            println!("channel {} declare queue {}", id, "hello");
+                            //println!("channel {} declare queue {}", id, "hello");
                             let p = channel.basic_publish(
                                 "",
                                 &prm.queue,
@@ -117,7 +113,7 @@ fn connect_to(addr: SocketAddr, msg: &str, prm: super::Opt) {
                                 BasicPublishOptions::default(),
                                 BasicProperties::default(),
                             );
-                            print!("w");
+                            print!(".");
                             io::stdout().flush().expect("flushed");
                             p
                         })

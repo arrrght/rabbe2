@@ -22,25 +22,29 @@ consumer - держит, но падает по таймауту в случае
  - consumer должен упать по тайм-ауту ```rabbe consumer --timeout 5```, что в простейшем случае нормально, поскольку его дролжен перезапустить rancher/kubernates
  - consumer не должен падать, а должен пересоздавать соединение (ещё не сделано)
 
-### Примечания
-rust 1.0 need
-
+### Remarks
+build'n'run:
 ```
+cargo run -- -C99 -P4 -cos -h
+
+rabbe2 
+
 USAGE:
     rabbe2 [FLAGS] [OPTIONS]
 
 FLAGS:
-    -a, --add          add some messages to queue
-    -c, --consumer     run consumer
+    -a, --add          Add some messages to queue
+    -c, --consumer     Run consumer
     -h, --help         Prints help information
-    -p, --publisher    run publisher
+    -p, --publisher    Run publisher
     -r, --read         Read messages from dir
-    -s, --save-file    Save messages to file
+    -s, --save-file    Save messages to file into subdir messages
     -V, --version      Prints version information
 
 OPTIONS:
-    -C, --count <9999>     Process n messages
-    -q, --queue <some>     rabbit's queue name
-    -T, --sleep <msec>     Sleep between publish
-    -t, --timeout <sec>    Heartbeat timeout
+    -C, --count <99999>      Process n messages
+    -P, --parallel <1>       Parallel run
+    -q, --queue <some>       Rabbit's queue name
+    -T, --sleep <0 msec>     Sleep between publish
+    -t, --timeout <5 sec>    Heartbeat timeout
 ```

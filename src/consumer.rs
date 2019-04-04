@@ -1,7 +1,7 @@
-use crate::lapin::channel::{BasicConsumeOptions, QueueDeclareOptions};
+use crate::lapin::channel::BasicConsumeOptions;
 use crate::lapin::client::ConnectionOptions;
 use crate::lapin::types::FieldTable;
-use clap::ArgMatches;
+//use clap::ArgMatches;
 use failure::Error;
 use futures::{future::Future, Stream};
 use lapin_futures as lapin;
@@ -12,10 +12,10 @@ use tokio::net::TcpStream;
 use tokio::runtime::Runtime;
 //use std::cell::RefCell;
 //use std::rc::Rc;
-use std::sync::{Arc, Mutex};
 use std::fs::File;
+use std::sync::{Arc, Mutex};
 
-pub fn run(_args: &ArgMatches, prm: super::Opt) {
+pub fn run(prm: super::Opt) {
     println!("run consumer with timeout: {}", prm.timeout);
     let arc_prm = Arc::new(Mutex::new(prm));
     let cloned2_arc_prm = arc_prm.clone();
@@ -39,7 +39,6 @@ pub fn run(_args: &ArgMatches, prm: super::Opt) {
                             username: super::RBT_USER.to_string(),
                             password: super::RBT_PASSWORD.to_string(),
                             heartbeat: cloned2_arc_prm.lock().unwrap().clone().timeout,
-                            //heartbeat: timeout,
                             ..Default::default()
                         },
                     )
@@ -59,18 +58,15 @@ pub fn run(_args: &ArgMatches, prm: super::Opt) {
                     let q_str = arc_prm.lock().unwrap().clone().queue.clone();
                     let ch = channel.clone();
                     let cloned_arc_prm = arc_prm.clone();
+                    let queue_options = arc_prm.lock().unwrap().clone().queue_options;
                     channel
-                        .queue_declare(
-                            &q_str,
-                            //&prm.queue,
-                            QueueDeclareOptions {
-                                //durable: true,
-                                ..Default::default()
-                            },
-                            FieldTable::new(),
-                        )
+                        .queue_declare(&q_str, queue_options, FieldTable::new())
                         .and_then(move |queue| {
-                            println!("channel {} declared queue {}", id, cloned_arc_prm.lock().unwrap().clone().queue);
+                            println!(
+                                "channel {} declared queue {}",
+                                id,
+                                cloned_arc_prm.lock().unwrap().clone().queue
+                            );
                             channel.basic_consume(
                                 &queue,
                                 //&arc_prm.lock().unwrap().clone().queue,
@@ -79,18 +75,17 @@ pub fn run(_args: &ArgMatches, prm: super::Opt) {
                                 FieldTable::new(),
                             )
                         })
-                        .and_then(|stream| {
+                        .and_then(move |stream| {
                             println!("got consumer stream");
 
                             let cloned_arc_prm = arc_prm.clone();
                             stream.for_each(move |message| {
                                 //let is_save = RefCell::new(prm.save);
-                                
-                                if cloned_arc_prm.lock().unwrap().clone().save{
-                                //if is_save.clone().into_inner(){
+
+                                if cloned_arc_prm.lock().unwrap().clone().save {
                                     let mut cnt = counter.lock().unwrap();
-                                    //let count_messages = RefCell::new(prm.count_messages);
-                                    let count_messages = arc_prm.lock().unwrap().clone().count_messages;
+                                    let count_messages =
+                                        arc_prm.lock().unwrap().clone().count_messages;
                                     //let count_messages = count_messages.clone().into_inner();
                                     *cnt += 1;
                                     if *cnt > count_messages {
@@ -98,13 +93,13 @@ pub fn run(_args: &ArgMatches, prm: super::Opt) {
                                         std::process::exit(0);
                                     }
                                     let p_padding = arc_prm.lock().unwrap().clone().dcount;
-                                    let f_name = format!("messages/{:0w$}", cnt, w=p_padding);
+                                    let f_name = format!("messages/{:0w$}", cnt, w = p_padding);
                                     //let f_name = "messages/".to_string() + &cnt.to_string();
                                     let mut file = File::create(f_name).unwrap();
                                     file.write_all(&message.data).unwrap();
                                     print!("s");
                                     io::stdout().flush().expect("flushed");
-                                }else{
+                                } else {
                                     //let data = String::from_utf8(message.data).unwrap();
                                     //let v: Value = serde_json::from_str(&data).unwrap();
                                     //print!("{}", v["head"]["request"]["special"].as_str().unwrap());
