@@ -15,7 +15,7 @@ services:
     depends_on:
       - rabbit0
     volumes:
-      - ./rabbit-entrypoint.sh:/usr/local/bin/rabbit-entrypoint.sh:ro
+      - ${PWD}/rabbit-entrypoint.sh:/usr/local/bin/rabbit-entrypoint.sh:ro
     entrypoint: rabbit-entrypoint.sh
     environment:
       - RABBITMQ_ERLANG_COOKIE=teej3aeteichooth7vae3aeroh7Oaqu3
@@ -42,7 +42,7 @@ services:
   haproxy:
     image: haproxy:1.9
     volumes:
-      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ${PWD}/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     depends_on:
       - rabbit0
     ports:
