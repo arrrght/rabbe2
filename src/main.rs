@@ -61,7 +61,7 @@ fn main() {
         .arg_from_usage("-q, --queue[some] 'Rabbit's queue name'")
         .arg_from_usage("-t, --timeout[5 sec] 'Heartbeat timeout'")
         .arg_from_usage("-T, --sleep[0 msec] 'Sleep between publish'")
-        .arg_from_usage("-C, --count[99999] 'Process n messages'")
+        .arg_from_usage("-C, --count[999999] 'Process n messages'")
         .arg_from_usage("-r, --read 'Read messages from dir'")
         .arg_from_usage("-P, --parallel[1] 'Parallel run'");
     let matches = app.clone().get_matches();
@@ -69,8 +69,8 @@ fn main() {
     let prm = Opt {
         parall: value_t!(matches, "parallel", usize).unwrap_or(1),
         timeout: value_t!(matches, "timeout", u16).unwrap_or(5),
-        count_messages: value_t!(matches, "count", u32).unwrap_or(99999),
-        dcount: digicount(value_t!(matches, "count", u32).unwrap_or(99999)),
+        count_messages: value_t!(matches, "count", u32).unwrap_or(999999),
+        dcount: digicount(value_t!(matches, "count", u32).unwrap_or(999999)),
         sleep: value_t!(matches, "sleep", u64).unwrap_or(0),
         queue: value_t!(matches, "queue", String).unwrap_or("some".to_string()),
         is_add: match matches.is_present("add") {
